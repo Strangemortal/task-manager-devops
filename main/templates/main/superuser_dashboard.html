@@ -1,0 +1,26 @@
+<!-- superuser_dashboard.html -->
+<h1>Superuser Dashboard</h1>
+<h3>Tasks Awaiting Verification</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Assigned User</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in tasks %}
+            <tr>
+                <td>{{ task.title }}</td>
+                <td>{{ task.description }}</td>
+                <td>{{ task.assigned_to.username }}</td>
+                <td>
+                    <a href="{% url 'verify_task' task.id %}">Verify</a> |
+                    <a href="{% url 'reject_task' task.id %}">Reject</a>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

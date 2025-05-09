@@ -1,0 +1,19 @@
+<!-- main/templates/main/dashboard.html -->
+{% extends "main/base.html" %}
+
+{% block content %}
+  <h2>{{ user.username }}'s Dashboard</h2>
+
+  {% if tasks %}
+    <ul>
+      {% for task in tasks %}
+        <li>
+          <strong>{{ task.title }}</strong> - {{ task.status }} (Due: {{ task.due_date }})
+          <a href="{% url 'view_task' task.id %}">View</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No tasks assigned yet.</p>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,33 @@
+<!-- main/templates/main/view_task.html -->
+{% extends "main/base.html" %}
+
+{% block content %}
+  <h2>Task: {{ task.title }}</h2>
+  <p><strong>Description:</strong> {{ task.description }}</p>
+  <p><strong>Priority:</strong> {{ task.priority }}</p>
+  <p><strong>Status:</strong> {{ task.status }}</p>
+  <p><strong>Due Date:</strong> {{ task.due_date }}</p>
+
+  {% if user.is_authenticated %}
+    <h3>Update Task Status</h3>
+    <form method="post">
+      {% csrf_token %}
+      {{ status_form.as_p }}
+      <button type="submit" name="update_status">Update Status</button>
+    </form>
+
+    <h3>Comments</h3>
+    {% for comment in comments %}
+      <p><strong>{{ comment.user.username }}:</strong> {{ comment.text }} <small>({{ comment.created_at }})</small></p>
+    {% empty %}
+      <p>No comments yet.</p>
+    {% endfor %}
+
+    <h4>Add Comment</h4>
+    <form method="post">
+      {% csrf_token %}
+      {{ comment_form.as_p }}
+      <button type="submit" name="add_comment">Add Comment</button>
+    </form>
+  {% endif %}
+{% endblock %}
