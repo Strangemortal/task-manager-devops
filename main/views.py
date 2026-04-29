@@ -27,7 +27,7 @@ def update_task_status(request, task_id, new_status):
     task: Task = get_object_or_404(Task, id=task_id)
 
     # Optional: enforce rules like only assignee or superuser can update status
-    if request.user != task.assigned_to and not request.user.is_superuser:
+    if request.user != task.assignee and not request.user.is_superuser:
         return HttpResponseBadRequest("Permission denied.")
     
     task.status = new_status
@@ -61,24 +61,38 @@ def register(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            return redirect('login')
+            user = form.save(commit=False)
+            user.is_active = False
+            user.save()
+            return redirect('/login/?registered=1')
     else:
         form = RegisterForm()
     return render(request, 'main/register.html', {'form': form})
 
 # Login Logic
 def user_login(request):
+    info = None
+    if request.GET.get('registered') == '1':
+        info = "Registration successful! Please wait for an admin to approve your account before logging in."
+
     if request.method == 'POST':
         uname = request.POST['username']
         passwd = request.POST['password']
+        
+        try:
+            user_obj = User.objects.get(username=uname)
+            if not user_obj.is_active and user_obj.check_password(passwd):
+                return render(request, 'main/login.html', {'error': 'Your account is pending admin approval.', 'info': info})
+        except User.DoesNotExist:
+            pass
+
         user = authenticate(request, username=uname, password=passwd)
         if user:
             login(request, user)
             return redirect('dashboard')
         else:
-            return render(request, 'main/login.html', {'error': 'Invalid credentials'})
-    return render(request, 'main/login.html')
+            return render(request, 'main/login.html', {'error': 'Invalid credentials', 'info': info})
+    return render(request, 'main/login.html', {'info': info})
 
 # User Logout
 def user_logout(request):
@@ -96,7 +110,7 @@ def dashboard(request):
     if request.user.role == 'admin':
         tasks = Task.objects.all()
     else:
-        tasks = request.user.tasks.all()
+        tasks = request.user.task_set.all()
     return render(request, 'main/dashboard.html', {'tasks': tasks})
 
 # Task Details and Comments
@@ -128,7 +142,7 @@ def create_task(request):
             return redirect('home')
     else:
         form = TaskForm()
-    return render(request, 'create_task.html', {'form': form})
+    return render(request, 'main/create_task.html', {'form': form})
 
 # Superuser Check
 def is_superuser(user):
@@ -136,8 +150,16 @@ def is_superuser(user):
 
 @user_passes_test(is_superuser)
 def superuser_dashboard(request):
-    tasks_to_verify = Task.objects.filter(status='Complete')
-    return render(request, 'main/superuser_dashboard.html', {'tasks': tasks_to_verify})
+    tasks_to_verify = Task.objects.filter(status='Completed')
+    pending_users = User.objects.filter(is_active=False)
+    return render(request, 'main/superuser_dashboard.html', {'tasks': tasks_to_verify, 'pending_users': pending_users})
+
+@user_passes_test(is_superuser)
+def approve_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    user.is_active = True
+    user.save()
+    return redirect('superuser_dashboard')
 
 
 # Task Verification Logic
@@ -155,7 +177,7 @@ def verify_task(request, task_id):
         task.save()
         return redirect('superuser_dashboard')  # Redirect after verification
 
-    return render(request, 'verify_task.html', {'task': task})
+    return render(request, 'main/verify_task.html', {'task': task})
 
 # Reject Task Logic
 @user_passes_test(is_superuser)
@@ -178,5 +200,5 @@ def task_list(request):
     if search_query:
         tasks = tasks.filter(title__icontains=search_query)
 
-    return render(request, 'task_list.html', {'tasks': tasks})
+    return render(request, 'main/task_list.html', {'tasks': tasks})
 

@@ -1,17 +1,64 @@
-<form method="get">
-    <input type="text" name="search" placeholder="Search tasks">
-    <select name="status">
-        <option value="">All Statuses</option>
-        <option value="To Do">To Do</option>
-        <option value="In Progress">In Progress</option>
-        <option value="Review">Review</option>
-        <option value="Completed">Completed</option>
-    </select>
-    <button type="submit">Filter</button>
-</form>
+{% extends "main/base.html" %}
 
-<ul>
-    {% for task in tasks %}
-        <li>{{ task.title }} - {{ task.status }}</li>
-    {% endfor %}
-</ul>
+{% block content %}
+<div class="mb-4" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <h2 class="page-title">All Tasks</h2>
+    
+    <form method="get" class="glass-panel" style="display: flex; gap: 1rem; padding: 1rem; align-items: center; width: auto; max-width: 100%;">
+        <div style="flex: 1;">
+            <input type="text" name="search" placeholder="Search tasks..." value="{{ request.GET.search }}" style="width: 250px;">
+        </div>
+        <div>
+            <select name="status">
+                <option value="">All Statuses</option>
+                <option value="To Do" {% if request.GET.status == 'To Do' %}selected{% endif %}>To Do</option>
+                <option value="In Progress" {% if request.GET.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                <option value="Review" {% if request.GET.status == 'Review' %}selected{% endif %}>Review</option>
+                <option value="Completed" {% if request.GET.status == 'Completed' %}selected{% endif %}>Completed</option>
+                <option value="Verified" {% if request.GET.status == 'Verified' %}selected{% endif %}>Verified</option>
+                <option value="Rejected" {% if request.GET.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i></button>
+        <a href="{% url 'task_list' %}" class="btn btn-secondary"><i class="fa-solid fa-rotate-right"></i></a>
+    </form>
+</div>
+
+{% if not tasks %}
+    <div class="glass-panel text-center py-5">
+        <div style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;">
+            <i class="fa-regular fa-folder-open"></i>
+        </div>
+        <h3>No tasks match your criteria</h3>
+        <p style="color: var(--text-muted);">Try adjusting your search filters.</p>
+    </div>
+{% else %}
+    <div class="dashboard-grid">
+        {% for task in tasks %}
+            <div class="glass-panel task-card">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                    <h3 style="margin: 0; padding-right: 1rem;"><a href="{% url 'task_detail' task.id %}" style="color: var(--text-color);">{{ task.title }}</a></h3>
+                    <span class="badge 
+                        {% if task.status == 'To Do' %}badge-todo
+                        {% elif task.status == 'In Progress' %}badge-progress
+                        {% elif task.status == 'Review' %}badge-review
+                        {% elif task.status == 'Completed' or task.status == 'Verified' %}badge-completed
+                        {% elif task.status == 'Rejected' %}badge-rejected
+                        {% else %}badge-todo{% endif %}">
+                        {{ task.status }}
+                    </span>
+                </div>
+                
+                <p>{{ task.description }}</p>
+                
+                <div class="task-footer">
+                    <div>
+                        <small style="color: var(--text-muted); display: block;"><i class="fa-regular fa-user"></i> {{ task.assignee.username }}</small>
+                    </div>
+                    <a href="{% url 'task_detail' task.id %}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;">View <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,11 +1,33 @@
-<!-- main/templates/main/create_task.html -->
 {% extends "main/base.html" %}
 
 {% block content %}
-  <h2>Create Task</h2>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Create</button>
-  </form>
+<div class="auth-wrapper">
+    <div class="auth-card glass-panel" style="max-width: 600px;">
+        <h2 class="page-title text-center mb-4">Create New Task</h2>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="{{ form.title.id_for_label }}">Task Title</label>
+                {{ form.title }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.description.id_for_label }}">Description</label>
+                {{ form.description }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.assignee.id_for_label }}">Assignee</label>
+                {{ form.assignee }}
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Create Task</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}

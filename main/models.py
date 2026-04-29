@@ -20,6 +20,8 @@ class Task(models.Model):
         ('In Progress', 'In Progress'),
         ('Review', 'Review'),
         ('Completed', 'Completed'),
+        ('Verified', 'Verified'),
+        ('Rejected', 'Rejected'),
     ]
     
     title = models.CharField(max_length=255)

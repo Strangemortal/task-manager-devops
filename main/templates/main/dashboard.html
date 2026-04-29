@@ -1,19 +1,46 @@
-<!-- main/templates/main/dashboard.html -->
 {% extends "main/base.html" %}
 
 {% block content %}
-  <h2>{{ user.username }}'s Dashboard</h2>
+<div class="mb-4" style="display: flex; justify-content: space-between; align-items: center;">
+    <h2 class="page-title">Your Dashboard</h2>
+    {% if user.is_superuser %}
+        <a href="{% url 'create_task' %}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> New Task</a>
+    {% endif %}
+</div>
 
-  {% if tasks %}
-    <ul>
-      {% for task in tasks %}
-        <li>
-          <strong>{{ task.title }}</strong> - {{ task.status }} (Due: {{ task.due_date }})
-          <a href="{% url 'view_task' task.id %}">View</a>
-        </li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p>No tasks assigned yet.</p>
-  {% endif %}
+{% if not tasks %}
+    <div class="glass-panel text-center py-5">
+        <div style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;">
+            <i class="fa-regular fa-folder-open"></i>
+        </div>
+        <h3>No tasks found</h3>
+        <p style="color: var(--text-muted);">You don't have any tasks assigned to you right now.</p>
+    </div>
+{% else %}
+    <div class="dashboard-grid">
+        {% for task in tasks %}
+            <div class="glass-panel task-card">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                    <h3 style="margin: 0; padding-right: 1rem;"><a href="{% url 'task_detail' task.id %}" style="color: var(--text-color);">{{ task.title }}</a></h3>
+                    <span class="badge 
+                        {% if task.status == 'To Do' %}badge-todo
+                        {% elif task.status == 'In Progress' %}badge-progress
+                        {% elif task.status == 'Review' %}badge-review
+                        {% elif task.status == 'Completed' or task.status == 'Verified' %}badge-completed
+                        {% elif task.status == 'Rejected' %}badge-rejected
+                        {% else %}badge-todo{% endif %}">
+                        {{ task.status }}
+                    </span>
+                </div>
+                
+                <p>{{ task.description }}</p>
+                
+                <div class="task-footer">
+                    <small style="color: var(--text-muted);"><i class="fa-regular fa-clock"></i> {{ task.created_at|date:"M d, Y" }}</small>
+                    <a href="{% url 'task_detail' task.id %}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;">View <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
 {% endblock %}

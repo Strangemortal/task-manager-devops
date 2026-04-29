@@ -1,26 +1,76 @@
-<!-- superuser_dashboard.html -->
-<h1>Superuser Dashboard</h1>
-<h3>Tasks Awaiting Verification</h3>
-<table>
-    <thead>
-        <tr>
-            <th>Title</th>
-            <th>Description</th>
-            <th>Assigned User</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for task in tasks %}
-            <tr>
-                <td>{{ task.title }}</td>
-                <td>{{ task.description }}</td>
-                <td>{{ task.assigned_to.username }}</td>
-                <td>
-                    <a href="{% url 'verify_task' task.id %}">Verify</a> |
-                    <a href="{% url 'reject_task' task.id %}">Reject</a>
-                </td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+{% extends "main/base.html" %}
+
+{% block content %}
+<div class="mb-4" style="display: flex; justify-content: space-between; align-items: center;">
+    <h2 class="page-title">Superuser Dashboard</h2>
+    <a href="{% url 'create_task' %}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> New Task</a>
+</div>
+
+<div class="glass-panel mb-4">
+    <h3 class="mb-3"><i class="fa-solid fa-clipboard-check"></i> Tasks Pending Verification</h3>
+    
+    {% if not tasks %}
+        <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">No tasks currently waiting for verification.</p>
+    {% else %}
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Task Title</th>
+                        <th>Assignee</th>
+                        <th>Completed Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                        <td style="font-weight: 500;">{{ task.title }}</td>
+                        <td>{{ task.assignee.username }}</td>
+                        <td>{{ task.created_at|date:"M d, Y" }}</td>
+                        <td>
+                            <a href="{% url 'verify_task' task.id %}" class="btn btn-success" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;">Review & Verify</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+
+<div class="glass-panel mb-4">
+    <h3 class="mb-3"><i class="fa-solid fa-users"></i> Pending User Registrations</h3>
+    
+    {% if not pending_users %}
+        <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">No users currently waiting for approval.</p>
+    {% else %}
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Registration Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for puser in pending_users %}
+                    <tr>
+                        <td style="font-weight: 500;">{{ puser.username }}</td>
+                        <td>{{ puser.email }}</td>
+                        <td><span class="badge badge-review">{{ puser.role }}</span></td>
+                        <td>{{ puser.date_joined|date:"M d, Y" }}</td>
+                        <td>
+                            <a href="{% url 'approve_user' puser.id %}" class="btn btn-success" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;">Approve</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

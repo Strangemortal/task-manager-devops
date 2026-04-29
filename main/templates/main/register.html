@@ -1,11 +1,35 @@
-<!-- main/templates/main/register.html -->
 {% extends "main/base.html" %}
 
 {% block content %}
-  <h2>Register</h2>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Register</button>
-  </form>
+<div class="auth-wrapper">
+    <div class="auth-card glass-panel" style="max-width: 500px;">
+        <h2 class="page-title text-center mb-3">Create an Account</h2>
+        <p style="text-align: center; color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">
+            <i class="fa-solid fa-circle-info"></i> Note: New registrations require admin approval before login is permitted.
+        </p>
+        
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <div style="color: var(--danger-color); font-size: 0.875rem; margin-top: 0.25rem;">
+                            {{ field.errors|striptags }}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                <i class="fa-solid fa-user-plus"></i> Register
+            </button>
+        </form>
+        
+        <div class="text-center mt-4">
+            <p style="color: var(--text-muted);">Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+        </div>
+    </div>
+</div>
 {% endblock %}
