@@ -25,12 +25,25 @@
 
     {% if request.user == task.assignee and task.status != 'Verified' %}
         <div style="border-top: 1px solid var(--glass-border); padding-top: 1.5rem;">
-            <h4 style="margin-bottom: 1rem;">Update Status</h4>
+            <h4 style="margin-bottom: 1rem;">Actions</h4>
             <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <!-- We don't have update_task_status mapped in urls correctly earlier, wait, actually we need to make sure this works. I will just render visual elements for now. Assuming update_task_status is implemented -->
-                <!-- If the user wants to update status, we could add form actions here -->
-                <p style="color: var(--text-muted);"><i class="fa-solid fa-info-circle"></i> Status updates can be managed from the dashboard or through task editing if implemented.</p>
+                {% if task.status == 'To Do' or task.status == 'Rejected' %}
+                    <a href="{% url 'update_task_status' task.id 'In Progress' %}" class="btn btn-primary">
+                        <i class="fa-solid fa-play"></i> Start Working
+                    </a>
+                {% endif %}
+                
+                {% if task.status == 'In Progress' or task.status == 'Rejected' %}
+                    <a href="{% url 'update_task_status' task.id 'Completed' %}" class="btn btn-success" style="background: var(--success-color);">
+                        <i class="fa-solid fa-check-double"></i> Submit for Review
+                    </a>
+                {% endif %}
             </div>
+            {% if task.status == 'Rejected' %}
+                <p style="margin-top: 1rem; color: var(--danger-color); background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 8px;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> This task was rejected by the admin. Please see the comments below and resubmit.
+                </p>
+            {% endif %}
         </div>
     {% endif %}
 </div>
@@ -40,7 +53,8 @@
     
     <div style="margin-bottom: 2rem;">
         {% for comment in comments %}
-            <div class="comment-box">
+            <div class="comment-box {% if 'ADMIN REVIEW' in comment.text %}review-highlight{% endif %}" 
+                 style="{% if 'ADMIN REVIEW' in comment.text %}border-left: 4px solid var(--danger-color); background: rgba(239, 68, 68, 0.05);{% endif %}">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                     <strong>{{ comment.user.username }}</strong>
                     <small>{{ comment.timestamp|date:"M d, Y H:i" }}</small>

@@ -1,61 +1,36 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from .models import Task, Comment, VerificationRequest, User
+from .models import Task, Comment, VerificationRequest, User, PersonalTodo
 from .forms import RegisterForm, TaskForm, CommentForm
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
-from django.http import HttpResponse
-from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, HttpResponseForbidden
 from django.http import HttpResponseBadRequest
-from django.shortcuts import get_object_or_404, redirect
-from .models import Task
-def assign_role_to_user(user, group_name):
-    group = Group.objects.get(name=group_name)
-    user.groups.add(group)
-    user.save()
+
+# Helper: Superuser Check
+def is_superuser(user):
+    return user.is_superuser
+
 @login_required
 def update_task_status(request, task_id, new_status):
-    # Define allowed status transitions
     valid_statuses = ['To Do', 'In Progress', 'Review', 'Completed']
-    
     if new_status not in valid_statuses:
-        return HttpResponseBadRequest("Invalid task status.")  # More appropriate than HttpResponse
+        return HttpResponseBadRequest("Invalid task status.")
     
-    task: Task = get_object_or_404(Task, id=task_id)
+    task = get_object_or_404(Task, id=task_id)
 
-    # Optional: enforce rules like only assignee or superuser can update status
+    # Only assignee or admin can update status
     if request.user != task.assignee and not request.user.is_superuser:
-        return HttpResponseBadRequest("Permission denied.")
+        return HttpResponseForbidden("Permission denied.")
     
     task.status = new_status
     task.save()
     
     return redirect('task_detail', task_id=task.id)
 
-
-def assign_roles(request):
-    # Create groups (roles)
-    admin_group, created = Group.objects.get_or_create(name='Admin')
-    manager_group, created = Group.objects.get_or_create(name='Manager')
-    user_group, created = Group.objects.get_or_create(name='User')
-
-    # Assign permissions to Admin (Full access)
-    admin_permissions = Permission.objects.all()
-    admin_group.permissions.set(admin_permissions)
-
-    # Assign permissions to Manager (Manage Tasks)
-    task_content_type = ContentType.objects.get_for_model(Task)
-    manager_permissions = Permission.objects.filter(content_type=task_content_type)
-    manager_group.permissions.set(manager_permissions)
-
-    # Assign basic permissions to User (View and Create Tasks)
-    user_permissions = Permission.objects.filter(codename__in=['add_task', 'view_task'])
-    user_group.permissions.set(user_permissions)
-
-    return HttpResponse("Roles and permissions assigned.")
 # User Registration
 def register(request):
     if request.method == 'POST':
@@ -107,17 +82,23 @@ def home(request):
 # User Dashboard
 @login_required
 def dashboard(request):
-    if request.user.role == 'admin':
+    if request.user.is_superuser:
         tasks = Task.objects.all()
     else:
-        tasks = request.user.task_set.all()
+        tasks = Task.objects.filter(assignee=request.user)
     return render(request, 'main/dashboard.html', {'tasks': tasks})
 
 # Task Details and Comments
 @login_required
 def task_detail(request, task_id):
     task = get_object_or_404(Task, id=task_id)
-    comments = Comment.objects.filter(task=task)
+    
+    # Visibility Check: Only assignee or admin
+    if request.user != task.assignee and not request.user.is_superuser:
+        return HttpResponseForbidden("You do not have permission to view this task.")
+
+    comments = Comment.objects.filter(task=task).order_by('-timestamp')
+    
     if request.method == 'POST':
         form = CommentForm(request.POST)
         if form.is_valid():
@@ -125,13 +106,14 @@ def task_detail(request, task_id):
             comment.task = task
             comment.user = request.user
             comment.save()
+            return redirect('task_detail', task_id=task.id)
     else:
         form = CommentForm()
+    
     return render(request, 'main/task_detail.html', {'task': task, 'comments': comments, 'form': form})
 
 # Task Creation (only for superuser)
-@login_required
-
+@user_passes_test(is_superuser)
 def create_task(request):
     if request.method == 'POST':
         form = TaskForm(request.POST)
@@ -139,14 +121,10 @@ def create_task(request):
             task = form.save(commit=False)
             task.assignee = User.objects.get(id=request.POST.get('assignee'))
             task.save()
-            return redirect('home')
+            return redirect('dashboard')
     else:
         form = TaskForm()
     return render(request, 'main/create_task.html', {'form': form})
-
-# Superuser Check
-def is_superuser(user):
-    return user.is_superuser
 
 @user_passes_test(is_superuser)
 def superuser_dashboard(request):
@@ -161,44 +139,58 @@ def approve_user(request, user_id):
     user.save()
     return redirect('superuser_dashboard')
 
-
 # Task Verification Logic
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(is_superuser)
 def verify_task(request, task_id):
     task = get_object_or_404(Task, id=task_id)
 
     if request.method == 'POST':
-        # Update task status based on verification
         is_verified = request.POST.get('verified') == 'True'
+        review_comment = request.POST.get('comment', '').strip()
+        
         if is_verified:
             task.status = 'Verified'
         else:
             task.status = 'Rejected'
+            if review_comment:
+                Comment.objects.create(
+                    task=task,
+                    user=request.user,
+                    text=f"ADMIN REVIEW: {review_comment}"
+                )
         task.save()
-        return redirect('superuser_dashboard')  # Redirect after verification
+        return redirect('superuser_dashboard')
 
     return render(request, 'main/verify_task.html', {'task': task})
 
-# Reject Task Logic
 @user_passes_test(is_superuser)
 def reject_task(request, task_id):
+    # This view can now just redirect to verify_task or we can keep it as a shortcut
     task = get_object_or_404(Task, id=task_id)
     task.status = 'Rejected'
     task.save()
     return redirect('superuser_dashboard')
 
+@login_required
 def task_list(request):
-    tasks = Task.objects.all()
+    if request.user.is_superuser:
+        tasks = Task.objects.all()
+    else:
+        tasks = Task.objects.filter(assignee=request.user)
 
-    # Filter by status if provided in GET parameters
     status_filter = request.GET.get('status')
     if status_filter:
         tasks = tasks.filter(status=status_filter)
 
-    # Search by title if provided
     search_query = request.GET.get('search')
     if search_query:
         tasks = tasks.filter(title__icontains=search_query)
 
     return render(request, 'main/task_list.html', {'tasks': tasks})
 
+@login_required
+def toggle_todo(request, todo_id):
+    todo = get_object_or_404(PersonalTodo, id=todo_id, user=request.user)
+    todo.is_completed = not todo.is_completed
+    todo.save()
+    return redirect(request.META.get('HTTP_REFERER', 'dashboard'))

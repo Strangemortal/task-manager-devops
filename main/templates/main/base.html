@@ -7,6 +7,57 @@
     <title>TaskAssign</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'main/css/style.css' %}">
+    <style>
+        .layout-wrapper {
+            display: flex;
+            min-height: calc(100vh - 70px);
+        }
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+        .sidebar {
+            width: 300px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border-left: 1px solid var(--glass-border);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .todo-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.02);
+            margin-bottom: 0.5rem;
+            transition: 0.2s;
+        }
+        .todo-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .todo-checkbox {
+            margin-top: 0.25rem;
+            cursor: pointer;
+        }
+        .todo-text {
+            font-size: 0.9rem;
+            flex: 1;
+        }
+        .todo-completed .todo-text {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+        @media (max-width: 1024px) {
+            .sidebar {
+                display: none;
+            }
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar">
@@ -29,9 +80,43 @@
         </ul>
     </nav>
     
-    <div class="container">
-        {% block content %}
-        {% endblock %}
+    <div class="layout-wrapper">
+        <div class="main-content">
+            <div class="container">
+                {% block content %}
+                {% endblock %}
+            </div>
+        </div>
+
+        {% if user.is_authenticated %}
+        <aside class="sidebar">
+            <h3 style="font-size: 1.25rem; margin-bottom: 1rem;"><i class="fa-solid fa-clipboard-check"></i> Personal To-Do</h3>
+            <div class="todo-list">
+                {% for todo in sidebar_todos %}
+                <div class="todo-item {% if todo.is_completed %}todo-completed{% endif %}">
+                    <a href="{% url 'toggle_todo' todo.id %}" class="todo-checkbox">
+                        {% if todo.is_completed %}
+                            <i class="fa-solid fa-square-check" style="color: var(--success-color);"></i>
+                        {% else %}
+                            <i class="fa-regular fa-square" style="color: var(--text-muted);"></i>
+                        {% endif %}
+                    </a>
+                    <div class="todo-text">
+                        {{ todo.text }}
+                        {% if todo.task %}
+                        <br>
+                        <small style="color: var(--accent-color); font-size: 0.75rem;">
+                            <a href="{% url 'task_detail' todo.task.id %}" style="color: inherit;">View Task <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                        </small>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center;">No tasks yet.</p>
+                {% endfor %}
+            </div>
+        </aside>
+        {% endif %}
     </div>
 </body>
 </html>

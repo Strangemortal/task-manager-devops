@@ -3,7 +3,7 @@
 {% block content %}
 <div class="auth-wrapper">
     <div class="auth-card glass-panel" style="max-width: 600px;">
-        <h2 class="page-title text-center mb-4">Verify Task</h2>
+        <h2 class="page-title text-center mb-4">Verify Task Submission</h2>
         
         <div style="background: rgba(0,0,0,0.1); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
             <h3 class="mb-2">{{ task.title }}</h3>
@@ -12,13 +12,19 @@
             <p>{{ task.description }}</p>
         </div>
         
-        <form method="post" action="{% url 'verify_task' task.id %}" style="display: flex; flex-direction: column; gap: 1rem;">
+        <form method="post" action="{% url 'verify_task' task.id %}" style="display: flex; flex-direction: column; gap: 1.5rem;">
             {% csrf_token %}
-            <p style="text-align: center; margin-bottom: 1rem; font-weight: 500;">Please review the task details above. Is this task complete and verified?</p>
+            
+            <div class="form-group">
+                <label for="comment">Review Comments (Required for rejection)</label>
+                <textarea name="comment" id="comment" rows="4" placeholder="Enter feedback for the developer..."></textarea>
+            </div>
+            
+            <p style="text-align: center; font-weight: 500;">Is this task complete and verified?</p>
             
             <div style="display: flex; gap: 1rem;">
                 <button type="submit" name="verified" value="False" class="btn btn-danger" style="flex: 1;">
-                    <i class="fa-solid fa-xmark"></i> Reject Task
+                    <i class="fa-solid fa-xmark"></i> Reject & Send Feedback
                 </button>
                 <button type="submit" name="verified" value="True" class="btn btn-success" style="flex: 1;">
                     <i class="fa-solid fa-check-double"></i> Verify Task
