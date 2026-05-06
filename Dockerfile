@@ -23,7 +23,8 @@ RUN pip install --upgrade pip && \
 # Copy the rest of the application code
 COPY . /app/
 
-# Run database migrations and start the server
+# Run database migrations, collect static files, and start the server
 # We use 0.0.0.0 to make the server accessible from outside the container
 CMD python manage.py migrate && \
+    python manage.py collectstatic --noinput && \
     gunicorn TaskAssign.wsgi:application --bind 0.0.0.0:8000
