@@ -55,7 +55,11 @@
                 
                 <div class="task-footer">
                     <div>
-                        <small style="color: var(--text-muted); display: block;"><i class="fa-regular fa-user"></i> {{ task.assignee.username }}</small>
+                        <small style="color: var(--text-muted); display: block;"><i class="fa-solid fa-users"></i> 
+                            {% for assignee in task.assignees.all %}
+                                {{ assignee.username }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </small>
                     </div>
                     <a href="{% url 'task_detail' task.id %}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;">View Details</a>
                 </div>

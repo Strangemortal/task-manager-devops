@@ -19,9 +19,9 @@ def test_task_detail_view_permission(authenticated_client, other_user):
     # Create a task assigned to someone else
     other_task = Task.objects.create(
         title="Other Task", 
-        description="Desc", 
-        assignee=other_user
+        description="Desc"
     )
+    other_task.assignees.add(other_user)
     url = reverse('task_detail', args=[other_task.id])
     response = authenticated_client.get(url)
     assert response.status_code == 403

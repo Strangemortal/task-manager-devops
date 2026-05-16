@@ -25,7 +25,7 @@ class Task(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='To Do')
-    assignee = models.ForeignKey(User, on_delete=models.CASCADE)
+    assignees = models.ManyToManyField(User, related_name='tasks')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

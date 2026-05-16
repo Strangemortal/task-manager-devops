@@ -33,12 +33,13 @@ def other_user(db):
 
 @pytest.fixture
 def sample_task(regular_user):
-    return Task.objects.create(
+    task = Task.objects.create(
         title='Test Task',
         description='A test description',
-        assignee=regular_user,
         status='To Do'
     )
+    task.assignees.add(regular_user)
+    return task
 
 @pytest.fixture
 def authenticated_client(client, regular_user):

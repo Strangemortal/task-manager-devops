@@ -10,7 +10,7 @@ def test_user_creation(regular_user):
 @pytest.mark.django_db
 def test_task_creation(sample_task, regular_user):
     assert sample_task.title == 'Test Task'
-    assert sample_task.assignee == regular_user
+    assert regular_user in sample_task.assignees.all()
     assert sample_task.status == 'To Do'
     assert str(sample_task) == 'Test Task'
 

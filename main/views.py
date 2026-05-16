@@ -22,8 +22,8 @@ def update_task_status(request, task_id, new_status):
     
     task = get_object_or_404(Task, id=task_id)
 
-    # Only assignee or admin can update status
-    if request.user != task.assignee and not request.user.is_superuser:
+    # Only assigned members or admin can update status
+    if request.user not in task.assignees.all() and not request.user.is_superuser:
         return HttpResponseForbidden("Permission denied.")
     
     task.status = new_status
@@ -85,7 +85,7 @@ def dashboard(request):
     if request.user.is_superuser:
         tasks = Task.objects.all()
     else:
-        tasks = Task.objects.filter(assignee=request.user)
+        tasks = Task.objects.filter(assignees=request.user)
     
     # Calculate stats
     stats = {
@@ -100,8 +100,8 @@ def dashboard(request):
 def task_detail(request, task_id):
     task = get_object_or_404(Task, id=task_id)
     
-    # Visibility Check: Only assignee or admin
-    if request.user != task.assignee and not request.user.is_superuser:
+    # Visibility Check: Only assigned members or admin
+    if request.user not in task.assignees.all() and not request.user.is_superuser:
         return HttpResponseForbidden("You do not have permission to view this task.")
 
     comments = Comment.objects.filter(task=task).order_by('-timestamp')
@@ -125,9 +125,7 @@ def create_task(request):
     if request.method == 'POST':
         form = TaskForm(request.POST)
         if form.is_valid():
-            task = form.save(commit=False)
-            task.assignee = User.objects.get(id=request.POST.get('assignee'))
-            task.save()
+            form.save() # Many-to-many is handled by ModelForm.save()
             return redirect('dashboard')
     else:
         form = TaskForm()
@@ -183,7 +181,7 @@ def task_list(request):
     if request.user.is_superuser:
         tasks = Task.objects.all()
     else:
-        tasks = Task.objects.filter(assignee=request.user)
+        tasks = Task.objects.filter(assignees=request.user)
 
     status_filter = request.GET.get('status')
     if status_filter:

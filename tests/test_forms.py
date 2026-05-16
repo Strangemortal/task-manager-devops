@@ -31,7 +31,7 @@ def test_task_form_valid(regular_user):
     form_data = {
         'title': 'New Task',
         'description': 'Details',
-        'assignee': regular_user.id
+        'assignees': [regular_user.id]
     }
     form = TaskForm(data=form_data)
     assert form.is_valid()

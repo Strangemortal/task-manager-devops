@@ -5,7 +5,13 @@
     <div class="flex-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; gap: 1rem;">
         <div>
             <h2 class="page-title mb-1">{{ task.title }}</h2>
-            <p style="color: var(--text-muted);"><i class="fa-regular fa-user"></i> Assigned to: <strong>{{ task.assignee.username }}</strong></p>
+            <p style="color: var(--text-muted);"><i class="fa-solid fa-users"></i> Assigned to: 
+                <strong>
+                    {% for assignee in task.assignees.all %}
+                        {{ assignee.username }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </strong>
+            </p>
         </div>
         <span class="badge 
             {% if task.status == 'To Do' %}badge-todo

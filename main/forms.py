@@ -9,11 +9,15 @@ class RegisterForm(UserCreationForm):
         model = User
         fields = ['username', 'email', 'role']
 class TaskForm(forms.ModelForm):
-    assignee = forms.ModelChoiceField(queryset=User.objects.all())
+    assignees = forms.ModelMultipleChoiceField(
+        queryset=User.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=True
+    )
 
     class Meta:
         model = Task
-        fields = ['title', 'description', 'assignee']
+        fields = ['title', 'description', 'assignees']
 
 class CommentForm(forms.ModelForm):
     class Meta:
