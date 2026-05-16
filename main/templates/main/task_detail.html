@@ -53,8 +53,7 @@
     
     <div style="margin-bottom: 2rem;">
         {% for comment in comments %}
-            <div class="comment-box {% if 'ADMIN REVIEW' in comment.text %}review-highlight{% endif %}" 
-                 style="{% if 'ADMIN REVIEW' in comment.text %}border-left: 4px solid var(--danger-color); background: rgba(239, 68, 68, 0.05);{% endif %}">
+            <div class="comment-box {% if 'ADMIN REVIEW' in comment.text %}review-highlight{% endif %}">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                     <strong>{{ comment.user.username }}</strong>
                     <small>{{ comment.timestamp|date:"M d, Y H:i" }}</small>

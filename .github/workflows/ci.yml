@@ -1,4 +1,4 @@
-name: Django CI
+name: Django DevOps Pipeline
 
 on:
   push:
@@ -7,22 +7,47 @@ on:
     branches: [ "main" ]
 
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
-
-    - name: Set up Python 3.12
+    - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: "3.12"
+    - name: Install Linting Tools
+      run: |
+        pip install flake8 black isort
+    - name: Run Flake8
+      run: flake8 .
+    - name: Run Black Check
+      run: black --check .
+    - name: Run Isort Check
+      run: isort --check-only .
 
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        # Install without psycopg2-binary to avoid build failures in CI runner if not needed
+        grep -v "psycopg2-binary" requirements.txt > req_ci.txt
+        pip install -r req_ci.txt
+    - name: Run PyTest
+      run: pytest
 
-    - name: Run Tests
+  build-docker:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build Docker Image
       run: |
-        pytest
+        docker build -t task_manager:test .
