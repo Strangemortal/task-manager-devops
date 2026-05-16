@@ -5,13 +5,7 @@
     <div class="flex-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; gap: 1rem;">
         <div>
             <h2 class="page-title mb-1">{{ task.title }}</h2>
-            <p style="color: var(--text-muted);"><i class="fa-solid fa-users"></i> Assigned to: 
-                <strong>
-                    {% for assignee in task.assignees.all %}
-                        {{ assignee.username }}{% if not forloop.last %}, {% endif %}
-                    {% endfor %}
-                </strong>
-            </p>
+            <p style="color: var(--text-muted);"><i class="fa-solid fa-users"></i> Assignees Status: </p>
         </div>
         <span class="badge 
             {% if task.status == 'To Do' %}badge-todo
@@ -23,26 +17,62 @@
             {{ task.status }}
         </span>
     </div>
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+        {% for assignee in task.assignees.all %}
+            <span class="badge {% if assignee in submitted_users %}badge-completed{% else %}badge-todo{% endif %}" style="display: flex; align-items: center; gap: 0.4rem;">
+                <i class="fa-solid {% if assignee in submitted_users %}fa-check-circle{% else %}fa-circle-dot{% endif %}"></i>
+                {{ assignee.username }} 
+                {% if assignee in submitted_users %}(Submitted){% endif %}
+            </span>
+        {% endfor %}
+    </div>
 
     <div style="background: rgba(0,0,0,0.1); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border: 1px solid rgba(255,255,255,0.05);">
         <h4 style="margin-bottom: 0.75rem; color: var(--text-muted);">Description</h4>
         <p style="line-height: 1.6;">{{ task.description }}</p>
     </div>
 
-    {% if request.user == task.assignee and task.status != 'Verified' %}
+    {% if request.user in task.assignees.all and task.status != 'Verified' %}
         <div style="border-top: 1px solid var(--glass-border); padding-top: 1.5rem;">
             <h4 style="margin-bottom: 1rem;">Actions</h4>
-            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; flex-direction: column;">
                 {% if task.status == 'To Do' or task.status == 'Rejected' %}
-                    <a href="{% url 'update_task_status' task.id 'In Progress' %}" class="btn btn-primary">
-                        <i class="fa-solid fa-play"></i> Start Working
-                    </a>
+                    <div>
+                        <a href="{% url 'update_task_status' task.id 'In Progress' %}" class="btn btn-primary">
+                            <i class="fa-solid fa-play"></i> Start Working
+                        </a>
+                    </div>
                 {% endif %}
                 
                 {% if task.status == 'In Progress' or task.status == 'Rejected' %}
-                    <a href="{% url 'update_task_status' task.id 'Completed' %}" class="btn btn-success" style="background: var(--success-color);">
-                        <i class="fa-solid fa-check-double"></i> Submit for Review
-                    </a>
+                    {% if not user_submission %}
+                        <div class="glass-panel" style="background: rgba(255,255,255,0.02); padding: 1.5rem;">
+                            <h5 style="margin-bottom: 1rem;"><i class="fa-solid fa-pen-to-square"></i> Submit Your Work</h5>
+                            <form action="{% url 'submit_task' task.id %}" method="POST">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    <textarea name="message" placeholder="Describe what you completed..." required style="min-height: 100px; margin-bottom: 1rem;"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-success" style="background: var(--success-color);">
+                                    <i class="fa-solid fa-check-double"></i> Submit My Portion
+                                </button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <div style="background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid var(--success-color);">
+                            <p style="color: var(--success-color); margin: 0;">
+                                <i class="fa-solid fa-circle-check"></i> You have submitted your work. 
+                                {% if task.status != 'Completed' %}
+                                    Waiting for other team members to submit.
+                                {% else %}
+                                    Task is now in review.
+                                {% endif %}
+                            </p>
+                            <p style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
+                                <strong>Your message:</strong> {{ user_submission.message }}
+                            </p>
+                        </div>
+                    {% endif %}
                 {% endif %}
             </div>
             {% if task.status == 'Rejected' %}

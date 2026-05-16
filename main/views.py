@@ -4,7 +4,7 @@ from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import CommentForm, RegisterForm, TaskForm
-from .models import Comment, PersonalTodo, Task, User
+from .models import Comment, PersonalTodo, Task, TaskSubmission, User
 
 
 # Helper: Superuser Check
@@ -133,10 +133,20 @@ def task_detail(request, task_id):
     else:
         form = CommentForm()
 
+    user_submission = TaskSubmission.objects.filter(task=task, user=request.user).first()
+    submissions = TaskSubmission.objects.filter(task=task)
+    submitted_users = [s.user for s in submissions]
+
     return render(
         request,
         "main/task_detail.html",
-        {"task": task, "comments": comments, "form": form},
+        {
+            "task": task,
+            "comments": comments,
+            "form": form,
+            "user_submission": user_submission,
+            "submitted_users": submitted_users,
+        },
     )
 
 
@@ -239,3 +249,40 @@ def add_todo(request):
         if text:
             PersonalTodo.objects.create(user=request.user, text=text)
     return redirect(request.META.get("HTTP_REFERER", "dashboard"))
+@login_required
+def submit_task(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+
+    # Check if user is assigned to the task
+    if request.user not in task.assignees.all():
+        return HttpResponseForbidden("You are not assigned to this task.")
+
+    if request.method == "POST":
+        message = request.POST.get("message", "").strip()
+        if not message:
+            return HttpResponseBadRequest("Submission message is required.")
+
+        # Create or update submission
+        TaskSubmission.objects.update_or_create(
+            task=task, user=request.user, defaults={"message": message}
+        )
+
+        # Check if all assignees have submitted
+        all_assignees = task.assignees.all()
+        all_submissions = TaskSubmission.objects.filter(task=task)
+
+        if all_submissions.count() >= all_assignees.count():
+            # All members have submitted
+            task.status = "Completed"
+            task.save()
+
+            # Merge all messages into a final comment
+            final_message = "📢 FINAL SUBMISSION SUMMARY:\n"
+            for sub in all_submissions:
+                final_message += f"\n--- {sub.user.username}'s Report ---\n{sub.message}\n"
+
+            Comment.objects.create(task=task, user=request.user, text=final_message)
+
+        return redirect("task_detail", task_id=task.id)
+
+    return redirect("task_detail", task_id=task.id)

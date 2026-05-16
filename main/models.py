@@ -60,3 +60,18 @@ class PersonalTodo(models.Model):
 
     def __str__(self):
         return self.text
+
+
+class TaskSubmission(models.Model):
+    task = models.ForeignKey(
+        Task, on_delete=models.CASCADE, related_name="submissions"
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    message = models.TextField()
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("task", "user")
+
+    def __str__(self):
+        return f"{self.user.username} - {self.task.title}"

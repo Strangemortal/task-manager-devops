@@ -22,4 +22,5 @@ urlpatterns = [
     ),
     path("todo/toggle/<int:todo_id>/", views.toggle_todo, name="toggle_todo"),
     path("todo/add/", views.add_todo, name="add_todo"),
+    path("task/<int:task_id>/submit/", views.submit_task, name="submit_task"),
 ]
