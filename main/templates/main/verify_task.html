@@ -7,7 +7,11 @@
         
         <div style="background: rgba(0,0,0,0.1); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
             <h3 class="mb-2">{{ task.title }}</h3>
-            <p style="color: var(--text-muted); margin-bottom: 1rem;"><i class="fa-regular fa-user"></i> Assigned to: {{ task.assignee.username }}</p>
+            <p style="color: var(--text-muted); margin-bottom: 1rem;"><i class="fa-regular fa-user"></i> Assigned to: 
+                {% for assignee in task.assignees.all %}
+                    {{ assignee.username }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </p>
             <h4 style="margin-bottom: 0.5rem; font-size: 1rem; color: var(--text-muted);">Description</h4>
             <p>{{ task.description }}</p>
         </div>

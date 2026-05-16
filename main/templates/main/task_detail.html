@@ -80,6 +80,19 @@
                     <i class="fa-solid fa-triangle-exclamation"></i> This task was rejected. Please see comments and resubmit.
                 </p>
             {% endif %}
+    {% endif %}
+    
+    {% if request.user.is_superuser and task.status == 'Completed' %}
+        <div style="border-top: 1px solid var(--glass-border); padding-top: 1.5rem; margin-top: 1.5rem;">
+            <h4 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="fa-solid fa-user-shield"></i> Admin Actions</h4>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <a href="{% url 'verify_task' task.id %}" class="btn btn-success" style="background: var(--success-color); padding: 0.8rem 1.5rem;">
+                    <i class="fa-solid fa-check-circle"></i> Verify & Close Task
+                </a>
+                <a href="{% url 'verify_task' task.id %}" class="btn btn-primary" style="background: #f87171; padding: 0.8rem 1.5rem;">
+                    <i class="fa-solid fa-circle-xmark"></i> Reject & Request Changes
+                </a>
+            </div>
         </div>
     {% endif %}
 </div>
