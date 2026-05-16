@@ -1,209 +1,241 @@
-from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
-from .models import Task, Comment, VerificationRequest, User, PersonalTodo
-from .forms import RegisterForm, TaskForm, CommentForm
-from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth.decorators import user_passes_test
-from django.contrib.auth.models import Group, Permission
-from django.contrib.contenttypes.models import ContentType
-from django.http import HttpResponse, HttpResponseForbidden
-from django.http import HttpResponseBadRequest
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.http import HttpResponseBadRequest, HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect, render
+
+from .forms import CommentForm, RegisterForm, TaskForm
+from .models import Comment, PersonalTodo, Task, User
+
 
 # Helper: Superuser Check
 def is_superuser(user):
     return user.is_superuser
 
+
 @login_required
 def update_task_status(request, task_id, new_status):
-    valid_statuses = ['To Do', 'In Progress', 'Review', 'Completed']
+    valid_statuses = ["To Do", "In Progress", "Review", "Completed"]
     if new_status not in valid_statuses:
         return HttpResponseBadRequest("Invalid task status.")
-    
+
     task = get_object_or_404(Task, id=task_id)
 
     # Only assigned members or admin can update status
     if request.user not in task.assignees.all() and not request.user.is_superuser:
         return HttpResponseForbidden("Permission denied.")
-    
+
     task.status = new_status
     task.save()
-    
-    return redirect('task_detail', task_id=task.id)
+
+    return redirect("task_detail", task_id=task.id)
+
 
 # User Registration
 def register(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
             user.is_active = False
             user.save()
-            return redirect('/login/?registered=1')
+            return redirect("/login/?registered=1")
     else:
         form = RegisterForm()
-    return render(request, 'main/register.html', {'form': form})
+    return render(request, "main/register.html", {"form": form})
+
 
 # Login Logic
 def user_login(request):
     info = None
-    if request.GET.get('registered') == '1':
-        info = "Registration successful! Please wait for an admin to approve your account before logging in."
+    if request.GET.get("registered") == "1":
+        info = (
+            "Registration successful! Please wait for an admin to approve your "
+            "account before logging in."
+        )
 
-    if request.method == 'POST':
-        uname = request.POST['username']
-        passwd = request.POST['password']
-        
+    if request.method == "POST":
+        uname = request.POST["username"]
+        passwd = request.POST["password"]
+
         try:
             user_obj = User.objects.get(username=uname)
             if not user_obj.is_active and user_obj.check_password(passwd):
-                return render(request, 'main/login.html', {'error': 'Your account is pending admin approval.', 'info': info})
+                return render(
+                    request,
+                    "main/login.html",
+                    {"error": "Your account is pending admin approval.", "info": info},
+                )
         except User.DoesNotExist:
             pass
 
         user = authenticate(request, username=uname, password=passwd)
         if user:
             login(request, user)
-            return redirect('dashboard')
+            return redirect("dashboard")
         else:
-            return render(request, 'main/login.html', {'error': 'Invalid credentials', 'info': info})
-    return render(request, 'main/login.html', {'info': info})
+            return render(
+                request,
+                "main/login.html",
+                {"error": "Invalid credentials", "info": info},
+            )
+    return render(request, "main/login.html", {"info": info})
+
 
 # User Logout
 def user_logout(request):
     logout(request)
-    return redirect('home')
+    return redirect("home")
+
 
 # Home Page
-@login_required(login_url='/login/')
 def home(request):
-    return render(request, 'main/home.html')
+    return render(request, "main/home.html")
+
 
 # User Dashboard
 @login_required
 def dashboard(request):
     if request.user.is_superuser:
-        tasks = Task.objects.all()
+        tasks = Task.objects.prefetch_related("assignees").all()
     else:
-        tasks = Task.objects.filter(assignees=request.user)
-    
+        tasks = Task.objects.prefetch_related("assignees").filter(
+            assignees=request.user
+        )
+
     # Calculate stats
     stats = {
-        'total': tasks.count(),
-        'in_progress': tasks.filter(status='In Progress').count()
+        "total": tasks.count(),
+        "in_progress": tasks.filter(status="In Progress").count(),
     }
-    
-    return render(request, 'main/dashboard.html', {'tasks': tasks, 'stats': stats})
+
+    return render(request, "main/dashboard.html", {"tasks": tasks, "stats": stats})
+
 
 # Task Details and Comments
 @login_required
 def task_detail(request, task_id):
     task = get_object_or_404(Task, id=task_id)
-    
+
     # Visibility Check: Only assigned members or admin
     if request.user not in task.assignees.all() and not request.user.is_superuser:
         return HttpResponseForbidden("You do not have permission to view this task.")
 
-    comments = Comment.objects.filter(task=task).order_by('-timestamp')
-    
-    if request.method == 'POST':
+    comments = Comment.objects.filter(task=task).order_by("-timestamp")
+
+    if request.method == "POST":
         form = CommentForm(request.POST)
         if form.is_valid():
             comment = form.save(commit=False)
             comment.task = task
             comment.user = request.user
             comment.save()
-            return redirect('task_detail', task_id=task.id)
+            return redirect("task_detail", task_id=task.id)
     else:
         form = CommentForm()
-    
-    return render(request, 'main/task_detail.html', {'task': task, 'comments': comments, 'form': form})
+
+    return render(
+        request,
+        "main/task_detail.html",
+        {"task": task, "comments": comments, "form": form},
+    )
+
 
 # Task Creation (only for superuser)
 @user_passes_test(is_superuser)
 def create_task(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         form = TaskForm(request.POST)
         if form.is_valid():
-            form.save() # Many-to-many is handled by ModelForm.save()
-            return redirect('dashboard')
+            form.save()  # Many-to-many is handled by ModelForm.save()
+            return redirect("dashboard")
     else:
         form = TaskForm()
-    return render(request, 'main/create_task.html', {'form': form})
+    return render(request, "main/create_task.html", {"form": form})
+
 
 @user_passes_test(is_superuser)
 def superuser_dashboard(request):
-    tasks_to_verify = Task.objects.filter(status='Completed')
+    tasks_to_verify = Task.objects.filter(status="Completed")
     pending_users = User.objects.filter(is_active=False)
-    return render(request, 'main/superuser_dashboard.html', {'tasks': tasks_to_verify, 'pending_users': pending_users})
+    return render(
+        request,
+        "main/superuser_dashboard.html",
+        {"tasks": tasks_to_verify, "pending_users": pending_users},
+    )
+
 
 @user_passes_test(is_superuser)
 def approve_user(request, user_id):
     user = get_object_or_404(User, id=user_id)
     user.is_active = True
     user.save()
-    return redirect('superuser_dashboard')
+    return redirect("superuser_dashboard")
+
 
 # Task Verification Logic
 @user_passes_test(is_superuser)
 def verify_task(request, task_id):
     task = get_object_or_404(Task, id=task_id)
 
-    if request.method == 'POST':
-        is_verified = request.POST.get('verified') == 'True'
-        review_comment = request.POST.get('comment', '').strip()
-        
+    if request.method == "POST":
+        is_verified = request.POST.get("verified") == "True"
+        review_comment = request.POST.get("comment", "").strip()
+
         if is_verified:
-            task.status = 'Verified'
+            task.status = "Verified"
         else:
-            task.status = 'Rejected'
+            task.status = "Rejected"
             if review_comment:
                 Comment.objects.create(
-                    task=task,
-                    user=request.user,
-                    text=f"ADMIN REVIEW: {review_comment}"
+                    task=task, user=request.user, text=f"ADMIN REVIEW: {review_comment}"
                 )
         task.save()
-        return redirect('superuser_dashboard')
+        return redirect("superuser_dashboard")
 
-    return render(request, 'main/verify_task.html', {'task': task})
+    return render(request, "main/verify_task.html", {"task": task})
+
 
 @user_passes_test(is_superuser)
 def reject_task(request, task_id):
     # This view can now just redirect to verify_task or we can keep it as a shortcut
     task = get_object_or_404(Task, id=task_id)
-    task.status = 'Rejected'
+    task.status = "Rejected"
     task.save()
-    return redirect('superuser_dashboard')
+    return redirect("superuser_dashboard")
+
 
 @login_required
 def task_list(request):
     if request.user.is_superuser:
-        tasks = Task.objects.all()
+        tasks = Task.objects.prefetch_related("assignees").all()
     else:
-        tasks = Task.objects.filter(assignees=request.user)
+        tasks = Task.objects.prefetch_related("assignees").filter(
+            assignees=request.user
+        )
 
-    status_filter = request.GET.get('status')
+    status_filter = request.GET.get("status")
     if status_filter:
         tasks = tasks.filter(status=status_filter)
 
-    search_query = request.GET.get('search')
+    search_query = request.GET.get("search")
     if search_query:
         tasks = tasks.filter(title__icontains=search_query)
 
-    return render(request, 'main/task_list.html', {'tasks': tasks})
+    return render(request, "main/task_list.html", {"tasks": tasks})
+
 
 @login_required
 def toggle_todo(request, todo_id):
     todo = get_object_or_404(PersonalTodo, id=todo_id, user=request.user)
     todo.is_completed = not todo.is_completed
     todo.save()
-    return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
+    return redirect(request.META.get("HTTP_REFERER", "dashboard"))
+
 
 @login_required
 def add_todo(request):
-    if request.method == 'POST':
-        text = request.POST.get('todo_text', '').strip()
+    if request.method == "POST":
+        text = request.POST.get("todo_text", "").strip()
         if text:
             PersonalTodo.objects.create(user=request.user, text=text)
-    return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
+    return redirect(request.META.get("HTTP_REFERER", "dashboard"))
