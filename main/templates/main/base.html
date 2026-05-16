@@ -52,11 +52,6 @@
             text-decoration: line-through;
             color: var(--text-muted);
         }
-        @media (max-width: 1024px) {
-            .sidebar {
-                display: none;
-            }
-        }
     </style>
 </head>
 <body>
@@ -64,7 +59,12 @@
         <a href="{% url 'home' %}" class="nav-brand">
             <i class="fa-solid fa-layer-group"></i> TaskAssign
         </a>
-        <ul class="nav-links">
+        
+        <div class="nav-toggle" id="nav-toggle">
+            <i class="fa-solid fa-bars"></i>
+        </div>
+
+        <ul class="nav-links" id="nav-links">
             {% if user.is_authenticated %}
                 <li><a href="{% url 'dashboard' %}"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
                 {% if user.is_superuser %}
@@ -118,5 +118,22 @@
         </aside>
         {% endif %}
     </div>
+
+    <script>
+        const toggle = document.getElementById('nav-toggle');
+        const links = document.getElementById('nav-links');
+
+        toggle.addEventListener('click', () => {
+            links.classList.toggle('active');
+            const icon = toggle.querySelector('i');
+            if (links.classList.contains('active')) {
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-xmark');
+            } else {
+                icon.classList.remove('fa-xmark');
+                icon.classList.add('fa-bars');
+            }
+        });
+    </script>
 </body>
 </html>

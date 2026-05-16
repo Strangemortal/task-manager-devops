@@ -2,9 +2,9 @@
 
 {% block content %}
 <div class="glass-panel" style="margin-bottom: 2rem;">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
+    <div class="flex-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; gap: 1rem;">
         <div>
-            <h2 class="page-title mb-1" style="font-size: 2rem;">{{ task.title }}</h2>
+            <h2 class="page-title mb-1">{{ task.title }}</h2>
             <p style="color: var(--text-muted);"><i class="fa-regular fa-user"></i> Assigned to: <strong>{{ task.assignee.username }}</strong></p>
         </div>
         <span class="badge 
@@ -40,8 +40,8 @@
                 {% endif %}
             </div>
             {% if task.status == 'Rejected' %}
-                <p style="margin-top: 1rem; color: var(--danger-color); background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 8px;">
-                    <i class="fa-solid fa-triangle-exclamation"></i> This task was rejected by the admin. Please see the comments below and resubmit.
+                <p style="margin-top: 1rem; color: #f87171; background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 8px; font-size: 0.9rem;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> This task was rejected. Please see comments and resubmit.
                 </p>
             {% endif %}
         </div>
@@ -54,14 +54,14 @@
     <div style="margin-bottom: 2rem;">
         {% for comment in comments %}
             <div class="comment-box {% if 'ADMIN REVIEW' in comment.text %}review-highlight{% endif %}">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
                     <strong>{{ comment.user.username }}</strong>
-                    <small>{{ comment.timestamp|date:"M d, Y H:i" }}</small>
+                    <small>{{ comment.timestamp|date:"M d, H:i" }}</small>
                 </div>
                 <p style="margin: 0;">{{ comment.text }}</p>
             </div>
         {% empty %}
-            <p style="color: var(--text-muted); font-style: italic;">No comments yet. Start the discussion!</p>
+            <p style="color: var(--text-muted); font-style: italic; text-align: center;">No comments yet.</p>
         {% endfor %}
     </div>
 
@@ -71,7 +71,7 @@
             <label for="id_text">Add a comment</label>
             {{ form.text }}
         </div>
-        <button type="submit" class="btn btn-primary"><i class="fa-regular fa-paper-plane"></i> Post Comment</button>
+        <button type="submit" class="btn btn-primary"><i class="fa-regular fa-paper-plane"></i> Post</button>
     </form>
 </div>
 {% endblock %}

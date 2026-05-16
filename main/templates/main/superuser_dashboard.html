@@ -1,24 +1,24 @@
 {% extends "main/base.html" %}
 
 {% block content %}
-<div class="mb-4" style="display: flex; justify-content: space-between; align-items: center;">
-    <h2 class="page-title">Superuser Dashboard</h2>
+<div class="mb-4 flex-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <h2 class="page-title">Superuser Area</h2>
     <a href="{% url 'create_task' %}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> New Task</a>
 </div>
 
 <div class="glass-panel mb-4">
-    <h3 class="mb-3"><i class="fa-solid fa-clipboard-check"></i> Tasks Pending Verification</h3>
+    <h3 class="mb-3"><i class="fa-solid fa-clipboard-check"></i> Pending Verification</h3>
     
     {% if not tasks %}
-        <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">No tasks currently waiting for verification.</p>
+        <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">No tasks waiting review.</p>
     {% else %}
-        <div style="overflow-x: auto;">
+        <div class="table-responsive">
             <table>
                 <thead>
                     <tr>
-                        <th>Task Title</th>
+                        <th>Title</th>
                         <th>Assignee</th>
-                        <th>Completed Date</th>
+                        <th class="hidden-xs">Date</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -27,9 +27,9 @@
                     <tr>
                         <td style="font-weight: 500;">{{ task.title }}</td>
                         <td>{{ task.assignee.username }}</td>
-                        <td>{{ task.created_at|date:"M d, Y" }}</td>
+                        <td class="hidden-xs">{{ task.created_at|date:"M d" }}</td>
                         <td>
-                            <a href="{% url 'verify_task' task.id %}" class="btn btn-success" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;">Review & Verify</a>
+                            <a href="{% url 'verify_task' task.id %}" class="btn btn-success" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;">Review</a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -40,19 +40,18 @@
 </div>
 
 <div class="glass-panel mb-4">
-    <h3 class="mb-3"><i class="fa-solid fa-users"></i> Pending User Registrations</h3>
+    <h3 class="mb-3"><i class="fa-solid fa-users"></i> Pending Approvals</h3>
     
     {% if not pending_users %}
-        <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">No users currently waiting for approval.</p>
+        <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">No pending registrations.</p>
     {% else %}
-        <div style="overflow-x: auto;">
+        <div class="table-responsive">
             <table>
                 <thead>
                     <tr>
-                        <th>Username</th>
-                        <th>Email</th>
+                        <th>User</th>
+                        <th class="hidden-xs">Email</th>
                         <th>Role</th>
-                        <th>Registration Date</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -60,9 +59,8 @@
                     {% for puser in pending_users %}
                     <tr>
                         <td style="font-weight: 500;">{{ puser.username }}</td>
-                        <td>{{ puser.email }}</td>
+                        <td class="hidden-xs">{{ puser.email }}</td>
                         <td><span class="badge badge-review">{{ puser.role }}</span></td>
-                        <td>{{ puser.date_joined|date:"M d, Y" }}</td>
                         <td>
                             <a href="{% url 'approve_user' puser.id %}" class="btn btn-success" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;">Approve</a>
                         </td>
@@ -73,4 +71,10 @@
         </div>
     {% endif %}
 </div>
+
+<style>
+    @media (max-width: 480px) {
+        .hidden-xs { display: none; }
+    }
+</style>
 {% endblock %}

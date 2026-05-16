@@ -1,16 +1,16 @@
 {% extends "main/base.html" %}
 
 {% block content %}
-<div class="mb-4" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+<div class="mb-4 flex-header" style="display: flex; justify-content: space-between; align-items: center;">
     <h2 class="page-title">All Tasks</h2>
     
-    <form method="get" class="glass-panel" style="display: flex; gap: 1rem; padding: 1rem; align-items: center; width: auto; max-width: 100%;">
-        <div style="flex: 1;">
-            <input type="text" name="search" placeholder="Search tasks..." value="{{ request.GET.search }}" style="width: 250px;">
+    <form method="get" class="glass-panel" style="display: flex; gap: 0.75rem; padding: 0.75rem; align-items: center; width: auto; max-width: 100%; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 200px;">
+            <input type="text" name="search" placeholder="Search..." value="{{ request.GET.search }}" style="width: 100%;">
         </div>
-        <div>
+        <div style="min-width: 150px;">
             <select name="status">
-                <option value="">All Statuses</option>
+                <option value="">Status</option>
                 <option value="To Do" {% if request.GET.status == 'To Do' %}selected{% endif %}>To Do</option>
                 <option value="In Progress" {% if request.GET.status == 'In Progress' %}selected{% endif %}>In Progress</option>
                 <option value="Review" {% if request.GET.status == 'Review' %}selected{% endif %}>Review</option>
@@ -19,8 +19,10 @@
                 <option value="Rejected" {% if request.GET.status == 'Rejected' %}selected{% endif %}>Rejected</option>
             </select>
         </div>
-        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i></button>
-        <a href="{% url 'task_list' %}" class="btn btn-secondary"><i class="fa-solid fa-rotate-right"></i></a>
+        <div style="display: flex; gap: 0.5rem;">
+            <button type="submit" class="btn btn-primary" style="padding: 0.75rem;"><i class="fa-solid fa-magnifying-glass"></i></button>
+            <a href="{% url 'task_list' %}" class="btn btn-secondary" style="padding: 0.75rem;"><i class="fa-solid fa-rotate-right"></i></a>
+        </div>
     </form>
 </div>
 
@@ -29,15 +31,15 @@
         <div style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;">
             <i class="fa-regular fa-folder-open"></i>
         </div>
-        <h3>No tasks match your criteria</h3>
-        <p style="color: var(--text-muted);">Try adjusting your search filters.</p>
+        <h3>No tasks found</h3>
+        <p style="color: var(--text-muted);">Try a different search or filter.</p>
     </div>
 {% else %}
     <div class="dashboard-grid">
         {% for task in tasks %}
             <div class="glass-panel task-card">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
-                    <h3 style="margin: 0; padding-right: 1rem;"><a href="{% url 'task_detail' task.id %}" style="color: var(--text-color);">{{ task.title }}</a></h3>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; gap: 1rem;">
+                    <h3 style="margin: 0;"><a href="{% url 'task_detail' task.id %}" style="color: var(--text-color);">{{ task.title }}</a></h3>
                     <span class="badge 
                         {% if task.status == 'To Do' %}badge-todo
                         {% elif task.status == 'In Progress' %}badge-progress
@@ -55,7 +57,7 @@
                     <div>
                         <small style="color: var(--text-muted); display: block;"><i class="fa-regular fa-user"></i> {{ task.assignee.username }}</small>
                     </div>
-                    <a href="{% url 'task_detail' task.id %}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;">View <i class="fa-solid fa-arrow-right"></i></a>
+                    <a href="{% url 'task_detail' task.id %}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;">View Details</a>
                 </div>
             </div>
         {% endfor %}
