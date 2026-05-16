@@ -102,3 +102,10 @@ def test_task_list_search(authenticated_client, sample_task):
     url = reverse('task_list') + '?search=Nonexistent'
     response = authenticated_client.get(url)
     assert sample_task not in response.context['tasks']
+
+@pytest.mark.django_db
+def test_add_todo(authenticated_client, regular_user):
+    url = reverse('add_todo')
+    response = authenticated_client.post(url, {'todo_text': 'My New Custom Todo'})
+    assert response.status_code == 302
+    assert PersonalTodo.objects.filter(user=regular_user, text='My New Custom Todo').exists()

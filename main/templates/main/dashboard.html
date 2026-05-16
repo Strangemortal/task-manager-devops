@@ -1,11 +1,33 @@
 {% extends "main/base.html" %}
 
 {% block content %}
-<div class="mb-4" style="display: flex; justify-content: space-between; align-items: center;">
+<div class="mb-4 flex-header" style="display: flex; justify-content: space-between; align-items: center;">
     <h2 class="page-title">Your Dashboard</h2>
     {% if user.is_superuser %}
         <a href="{% url 'create_task' %}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> New Task</a>
     {% endif %}
+</div>
+
+<!-- Stats Banner -->
+<div class="dashboard-grid" style="margin-top: 0; margin-bottom: 2rem;">
+    <div class="glass-panel" style="padding: 1.5rem; display: flex; align-items: center; gap: 1.5rem;">
+        <div style="width: 50px; height: 50px; border-radius: 12px; background: rgba(59, 130, 246, 0.2); display: flex; align-items: center; justify-content: center; color: var(--accent-color); font-size: 1.5rem;">
+            <i class="fa-solid fa-list-check"></i>
+        </div>
+        <div>
+            <h4 style="color: var(--text-muted); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">Total Tasks</h4>
+            <p style="font-size: 1.5rem; font-weight: 700;">{{ stats.total }}</p>
+        </div>
+    </div>
+    <div class="glass-panel" style="padding: 1.5rem; display: flex; align-items: center; gap: 1.5rem;">
+        <div style="width: 50px; height: 50px; border-radius: 12px; background: rgba(245, 158, 11, 0.2); display: flex; align-items: center; justify-content: center; color: var(--warning-color); font-size: 1.5rem;">
+            <i class="fa-solid fa-spinner"></i>
+        </div>
+        <div>
+            <h4 style="color: var(--text-muted); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">In Progress</h4>
+            <p style="font-size: 1.5rem; font-weight: 700;">{{ stats.in_progress }}</p>
+        </div>
+    </div>
 </div>
 
 {% if not tasks %}

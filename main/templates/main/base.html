@@ -91,6 +91,15 @@
         {% if user.is_authenticated %}
         <aside class="sidebar">
             <h3 style="font-size: 1.25rem; margin-bottom: 1rem;"><i class="fa-solid fa-clipboard-check"></i> Personal To-Do</h3>
+            
+            <form action="{% url 'add_todo' %}" method="POST" style="margin-bottom: 1.5rem;">
+                {% csrf_token %}
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" name="todo_text" placeholder="Quick add task..." required style="padding: 0.5rem; font-size: 0.85rem;">
+                    <button type="submit" class="btn btn-primary" style="padding: 0.5rem 0.75rem;"><i class="fa-solid fa-plus"></i></button>
+                </div>
+            </form>
+
             <div class="todo-list">
                 {% for todo in sidebar_todos %}
                 <div class="todo-item {% if todo.is_completed %}todo-completed{% endif %}">

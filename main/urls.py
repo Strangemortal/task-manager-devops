@@ -16,4 +16,5 @@ urlpatterns = [
     path('approve-user/<int:user_id>/', views.approve_user, name='approve_user'),
     path('task/<int:task_id>/update-status/<str:new_status>/', views.update_task_status, name='update_task_status'),
     path('todo/toggle/<int:todo_id>/', views.toggle_todo, name='toggle_todo'),
+    path('todo/add/', views.add_todo, name='add_todo'),
 ]

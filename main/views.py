@@ -86,7 +86,14 @@ def dashboard(request):
         tasks = Task.objects.all()
     else:
         tasks = Task.objects.filter(assignee=request.user)
-    return render(request, 'main/dashboard.html', {'tasks': tasks})
+    
+    # Calculate stats
+    stats = {
+        'total': tasks.count(),
+        'in_progress': tasks.filter(status='In Progress').count()
+    }
+    
+    return render(request, 'main/dashboard.html', {'tasks': tasks, 'stats': stats})
 
 # Task Details and Comments
 @login_required
@@ -193,4 +200,12 @@ def toggle_todo(request, todo_id):
     todo = get_object_or_404(PersonalTodo, id=todo_id, user=request.user)
     todo.is_completed = not todo.is_completed
     todo.save()
+    return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
+
+@login_required
+def add_todo(request):
+    if request.method == 'POST':
+        text = request.POST.get('todo_text', '').strip()
+        if text:
+            PersonalTodo.objects.create(user=request.user, text=text)
     return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
