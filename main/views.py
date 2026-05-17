@@ -195,6 +195,7 @@ def verify_task(request, task_id):
             task.status = "Verified"
         else:
             task.status = "Rejected"
+            TaskSubmission.objects.filter(task=task).delete()
             if review_comment:
                 Comment.objects.create(
                     task=task, user=request.user, text=f"ADMIN REVIEW: {review_comment}"
@@ -210,8 +211,15 @@ def reject_task(request, task_id):
     # This view can now just redirect to verify_task or we can keep it as a shortcut
     task = get_object_or_404(Task, id=task_id)
     task.status = "Rejected"
+    TaskSubmission.objects.filter(task=task).delete()
     task.save()
     return redirect("superuser_dashboard")
+
+@user_passes_test(is_superuser)
+def delete_task(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+    task.delete()
+    return redirect("dashboard")
 
 
 @login_required

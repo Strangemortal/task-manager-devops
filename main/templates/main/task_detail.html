@@ -44,7 +44,7 @@
                     </div>
                 {% endif %}
                 
-                {% if task.status == 'In Progress' or task.status == 'Rejected' %}
+                {% if task.status == 'In Progress' %}
                     {% if not user_submission %}
                         <div class="glass-panel" style="background: rgba(255,255,255,0.02); padding: 1.5rem;">
                             <h5 style="margin-bottom: 1rem;"><i class="fa-solid fa-pen-to-square"></i> Submit Your Work</h5>
@@ -82,15 +82,20 @@
             {% endif %}
     {% endif %}
     
-    {% if request.user.is_superuser and task.status == 'Completed' %}
+    {% if request.user.is_superuser %}
         <div style="border-top: 1px solid var(--glass-border); padding-top: 1.5rem; margin-top: 1.5rem;">
             <h4 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="fa-solid fa-user-shield"></i> Admin Actions</h4>
             <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                {% if task.status == 'Completed' %}
                 <a href="{% url 'verify_task' task.id %}" class="btn btn-success" style="background: var(--success-color); padding: 0.8rem 1.5rem;">
                     <i class="fa-solid fa-check-circle"></i> Verify & Close Task
                 </a>
                 <a href="{% url 'verify_task' task.id %}" class="btn btn-primary" style="background: #f87171; padding: 0.8rem 1.5rem;">
                     <i class="fa-solid fa-circle-xmark"></i> Reject & Request Changes
+                </a>
+                {% endif %}
+                <a href="{% url 'delete_task' task.id %}" class="btn btn-danger" style="background: #ef4444; border: none; padding: 0.8rem 1.5rem; color: white; text-decoration: none; border-radius: 4px;" onclick="return confirm('Are you sure you want to delete this task?');">
+                    <i class="fa-solid fa-trash"></i> Delete Task
                 </a>
             </div>
         </div>
